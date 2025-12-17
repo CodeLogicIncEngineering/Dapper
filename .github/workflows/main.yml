@@ -45,9 +45,15 @@ jobs:
       with:
         dotnet-version: '9.0.x'
     - name: .NET Build
-      run: dotnet build Build.csproj -c Release /p:CI=true
+      id: build
+      run: |
+        set -o pipefail
+        dotnet build Build.csproj -c Release /p:CI=true 2>&1 | tee build.log
     - name: Dapper Tests
-      run: dotnet test tests/Dapper.Tests/Dapper.Tests.csproj -c Release --logger GitHubActions -p:CI=true -p:TestTfmsInParallel=false
+      id: test
+      run: |
+        set -o pipefail
+        dotnet test tests/Dapper.Tests/Dapper.Tests.csproj -c Release --logger GitHubActions -p:CI=true -p:TestTfmsInParallel=false 2>&1 | tee test.log
       env:
         MySqlConnectionString: Server=localhost;Port=${{ job.services.mysql.ports[3306] }};Uid=root;Pwd=root;Database=test;Allow User Variables=true
         OLEDBConnectionString: Provider=SQLOLEDB;Server=tcp:localhost,${{ job.services.sqlserver.ports[1433] }};Database=tempdb;User Id=sa;Password=Password.;
@@ -55,3 +61,42 @@ jobs:
         SqlServerConnectionString: Server=tcp:localhost,${{ job.services.sqlserver.ports[1433] }};Database=tempdb;User Id=sa;Password=Password.;
     - name: .NET Lib Pack
       run: dotnet pack Build.csproj --no-build -c Release /p:PackageOutputPath=%CD%\.nupkgs /p:CI=true
+    - name: CodeLogic Agent Scan
+      if: success() && github.ref == 'refs/heads/main'
+      run: |
+        docker run --pull always --rm \
+          --env CODELOGIC_HOST="https://dapper.app.codelogic.com" \
+          --env AGENT_UUID="${{ secrets.AGENT_UUID }}" \
+          --env AGENT_PASSWORD="${{ secrets.AGENT_PASSWORD }}" \
+          --volume "${{ github.workspace }}/Dapper/bin/Release/net461:/scan" \
+          dapper.app.codelogic.com/codelogic_dotnet:latest analyze \
+          --application "dapper-app" \
+          --scan-space-name "dapper-ss" \
+          --path /scan \
+          -m "Dapper" \
+          --rescan \
+          -e
+    - name: Send Build Info on Failure
+      if: failure()
+      run: |
+        LOG_FILE_ARGS=""
+        # Prioritize build failure, then test failure
+        if [ "${{ steps.build.outcome }}" == "failure" ] && [ -f "build.log" ]; then
+          LOG_FILE_ARGS="--log-file=/log_file_path/build.log --log-lines=10000"
+        elif [ "${{ steps.test.outcome }}" == "failure" ] && [ -f "test.log" ]; then
+          LOG_FILE_ARGS="--log-file=/log_file_path/test.log --log-lines=10000"
+        fi
+        docker run --rm \
+          --env CODELOGIC_HOST="https://dapper.app.codelogic.com" \
+          --env AGENT_UUID="${{ secrets.AGENT_UUID }}" \
+          --env AGENT_PASSWORD="${{ secrets.AGENT_PASSWORD }}" \
+          --volume "${{ github.workspace }}:/scan" \
+          --volume "${{ github.workspace }}:/log_file_path" \
+          dapper.app.codelogic.com/codelogic_dotnet:latest send_build_info \
+          --pipeline-system="GitHub Actions" \
+          --job-name="${{ github.job }}" \
+          --build-number="${{ github.run_number }}" \
+          --build-status="FAILURE" \
+          --path="/scan" \
+          $LOG_FILE_ARGS
+      continue-on-error: true
