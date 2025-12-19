@@ -41,7 +41,7 @@
   </ItemGroup>
   <ItemGroup>
     <!-- Conditionals make the tooling go crazy...just include them for this test project -->
-    <Content Include="$(NuGetPackageRoot)\microsoft.sqlserver.types\14.0.1016.290\nativeBinaries\**\*.dll" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="$(NuGetPackageRoot)\microsoft.sqlserver.types\170.1000.7\nativeBinaries\**\*.dll" CopyToOutputDirectory="PreserveNewest" />
     <None Remove="Test.DB.sdf" />
 
     <None Update="xunit.runner.json">
