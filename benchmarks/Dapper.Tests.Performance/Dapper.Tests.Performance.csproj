@@ -58,13 +58,13 @@
     <PackageReference Include="Microsoft.SqlServer.Types" />
     <PackageReference Include="SubSonic" />
     <PackageReference Include="Susanoo.SqlServer" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" VersionOverride="[3.1.10]" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" VersionOverride="[10.0.2]" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Data.Linq" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" VersionOverride="9.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" VersionOverride="10.0.2" />
     <PackageReference Include="Norm.net" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
