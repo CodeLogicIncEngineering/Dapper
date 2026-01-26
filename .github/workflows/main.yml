@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres
+        image: postgres@sha256:5773fe724c49c42a7a9ca70202e11e1dff21fb7235b335a73f39297d200b73a2
         ports:
         - 5432/tcp
         env:
@@ -24,14 +24,14 @@ jobs:
           POSTGRES_DB: test
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
       sqlserver:
-        image: mcr.microsoft.com/mssql/server:2019-latest
+        image: mcr.microsoft.com/mssql/server:2019-latest@sha256:e7ef04aca478b8aa8dd6380297bdae4969c9ae03cf39de3af94bb6ce3273ca53
         ports:
         - 1433/tcp
         env:
           ACCEPT_EULA: Y
           SA_PASSWORD: "Password."
       mysql:
-        image: mysql
+        image: mysql@sha256:6b18d01fb632c0f568ace1cc1ebffb42d1d21bc1de86f6d3e8b7eb18278444d9
         ports:
         - 3306/tcp
         env:
@@ -39,7 +39,7 @@ jobs:
           MYSQL_DATABASE: test
     steps:
     - name: Checkout code
-      uses: actions/checkout@v1
+      uses: actions/checkout@50fbc622fc4ef5163becd7fab6573eac35f8462e # v1
     - name: Setup dotnet
       uses: actions/setup-dotnet@baa11fbfe1d6520db94683bd5c7a3818018e4309 # v5
       with:
