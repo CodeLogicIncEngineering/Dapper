@@ -39,7 +39,7 @@ jobs:
           MYSQL_DATABASE: test
     steps:
     - name: Checkout code
-      uses: actions/checkout@v1
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
     - name: Setup dotnet
       uses: actions/setup-dotnet@v4
       with:
