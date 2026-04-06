@@ -4,7 +4,9 @@ using System;
 using System.Linq;
 using Dapper.Tests.Performance.Linq2Db;
 using LinqToDB;
+using LinqToDB.Configuration;
 using LinqToDB.Data;
+using LinqToDB.DataProvider.SqlServer;
 using System.ComponentModel;
 
 namespace Dapper.Tests.Performance
@@ -20,8 +22,10 @@ namespace Dapper.Tests.Performance
         public void Setup()
         {
             BaseSetup();
-            DataConnection.DefaultSettings = new Linq2DBSettings(_connection.ConnectionString);
-            _dbContext = new Linq2DBContext();
+            // Use modern DataOptions pattern for linq2db v6
+            var options = new DataOptions()
+                .UseSqlServer(_connection.ConnectionString);
+            _dbContext = new Linq2DBContext(options);
         }
 
         [Benchmark(Description = "First")]
