@@ -44,5 +44,22 @@ namespace Dapper.Tests.Performance
             Step();
             return _dbContext.Query<Post>("select * from Posts where Id = @id", new { id = i }).First();
         }
+
+        [Benchmark(Description = "FirstOrDefault (v6 optimized)")]
+        public Post FirstOrDefault()
+        {
+            Step();
+            return _dbContext.Posts.FirstOrDefault(p => p.Id == i);
+        }
+
+#if NET6_0_OR_GREATER
+        // MaxBy is a new LINQ operator supported in linq2db v6.x for .NET 6+
+        [Benchmark(Description = "MaxBy (v6 new operator)")]
+        public Post MaxByCreationDate()
+        {
+            Step();
+            return _dbContext.Posts.Where(p => p.Id <= i).MaxBy(p => p.CreationDate);
+        }
+#endif
     }
 }
