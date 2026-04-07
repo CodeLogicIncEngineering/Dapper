@@ -1,11 +1,12 @@
 ﻿using BenchmarkDotNet.Attributes;
 
 using System;
+using System.ComponentModel;
 using System.Linq;
 using Dapper.Tests.Performance.Linq2Db;
 using LinqToDB;
 using LinqToDB.Data;
-using System.ComponentModel;
+using LinqToDB.DataProvider.SqlServer;
 
 namespace Dapper.Tests.Performance
 {
@@ -13,6 +14,7 @@ namespace Dapper.Tests.Performance
     public class LinqToDBBenchmarks : BenchmarkBase // note To not 2 because the "2" confuses BDN CLI
     {
         private Linq2DBContext _dbContext;
+        private DataOptions _dataOptions;
 
         private static readonly Func<Linq2DBContext, int, Post> compiledQuery = CompiledQuery.Compile((Linq2DBContext db, int id) => db.Posts.First(c => c.Id == id));
 
@@ -20,8 +22,10 @@ namespace Dapper.Tests.Performance
         public void Setup()
         {
             BaseSetup();
-            DataConnection.DefaultSettings = new Linq2DBSettings(_connection.ConnectionString);
-            _dbContext = new Linq2DBContext();
+            // Use DataOptions builder pattern (recommended approach in linq2db v6)
+            _dataOptions = new DataOptions()
+                .UseSqlServer(_connection.ConnectionString);
+            _dbContext = new Linq2DBContext(_dataOptions);
         }
 
         [Benchmark(Description = "First")]
