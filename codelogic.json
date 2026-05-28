@@ -1,5 +1,5 @@
 {
   "branchNamePrefix" : "codelogic/",
-  "scheduledUpgradesPerDay" : 10,
-  "maxOpenPrs" : 10
+  "scheduledUpgradesPerDay" : 1,
+  "maxOpenPrs" : 5
 }
