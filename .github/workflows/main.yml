@@ -1,3 +1,4 @@
+# codelogic-build-feedback
 name: Main Build
 
 on:
@@ -5,6 +6,7 @@ on:
   push:
     branches:
     - main
+    - 'codelogic/**'
     paths:
     - '*'
     - '!/docs/*' # Don't run workflow when files are only in the /docs directory
@@ -45,13 +47,34 @@ jobs:
       with:
         dotnet-version: '10.0.x'
     - name: .NET Build
-      run: dotnet build Build.csproj -c Release /p:CI=true
-    - name: Dapper Tests
-      run: dotnet test tests/Dapper.Tests/Dapper.Tests.csproj -c Release --logger GitHubActions -p:CI=true -p:TestTfmsInParallel=false
       env:
+        NO_COLOR: "1"
+        TERM: dumb
+      run: dotnet build Build.csproj -c Release /p:CI=true 2>&1 | tee build.log
+    - name: Dapper Tests
+      env:
+        NO_COLOR: "1"
+        TERM: dumb
         MySqlConnectionString: Server=localhost;Port=${{ job.services.mysql.ports[3306] }};Uid=root;Pwd=root;Database=test;Allow User Variables=true
         OLEDBConnectionString: Provider=SQLOLEDB;Server=tcp:localhost,${{ job.services.sqlserver.ports[1433] }};Database=tempdb;User Id=sa;Password=Password.;
         PostgesConnectionString: Server=localhost;Port=${{ job.services.postgres.ports[5432] }};Database=test;User Id=postgres;Password=postgres;
         SqlServerConnectionString: Server=tcp:localhost,${{ job.services.sqlserver.ports[1433] }};Database=tempdb;User Id=sa;Password=Password.;
+      run: dotnet test tests/Dapper.Tests/Dapper.Tests.csproj -c Release --logger GitHubActions -p:CI=true -p:TestTfmsInParallel=false 2>&1 | tee -a build.log
     - name: .NET Lib Pack
-      run: dotnet pack Build.csproj --no-build -c Release /p:PackageOutputPath=%CD%\.nupkgs /p:CI=true
+      env:
+        NO_COLOR: "1"
+        TERM: dumb
+      run: dotnet pack Build.csproj --no-build -c Release /p:PackageOutputPath=%CD%\.nupkgs /p:CI=true 2>&1 | tee -a build.log
+    - name: Send CodeLogic Build Info
+      if: always()
+      uses: CodeLogicIncEngineering/codelogic-send-build-info-github-action@v1.0.2
+      with:
+        codelogic_host: ${{ vars.CODELOGIC_HOST }}
+        agent_uuid: ${{ vars.AGENT_UUID }}
+        agent_password: ${{ secrets.AGENT_PASSWORD }}
+        scan_path: /github/workspace
+        job_name: ${{ github.workflow }}
+        build_number: ${{ github.run_number }}
+        build_status: ${{ job.status }}
+        pipeline_system: GitHub Actions
+        log_file: /github/workspace/build.log
